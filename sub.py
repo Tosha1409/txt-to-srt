@@ -46,7 +46,7 @@ def str_time (string):
 
 #converting time(seconds/integer) into string
 def time_str (time):
-	return (str(time // 3600)+ ':' + str((time % 3600) // 60 ) + ':' + str((time % 3600) % 60))
+	return (str(time // 3600).zfill(2)+ ':' + str((time % 3600) // 60 ).zfill(2) + ':' + str((time % 3600) % 60).zfill(2))
 
 #generation of subtitles block/element
 def generate_subs(num,time1,time2,text):
@@ -85,8 +85,9 @@ counter=0
 StartTime= subtitles_array[0]['StartTime']
 for n in range(0, len(subtitles_array)):
 	if (subtitles_array[n]['StartTime']==''): counter=counter+1
-	else: 
+	else:
 		subtitles_array[n]['EndTime'] = time_str(str_time(subtitles_array[n]['StartTime'])+pause_time)
+		subtitles_array[n]['StartTime'] = time_str(str_time(subtitles_array[n]['StartTime']))
 		if (counter>0):
 			EndTime=subtitles_array[n]['StartTime']
 			for m in range(n-counter, n): 
