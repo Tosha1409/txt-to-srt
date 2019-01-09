@@ -42,8 +42,8 @@ def remove_whitespaces(string):
 def str_time (string):
 	timer = string.replace(',', '.').split(':')
 	if len(timer)==2: timer = [0]+timer
-	print (timer)
-	print (float(timer[0])*3600+float(timer[1])*60+float(timer[2]))
+	#print (timer)
+	#print (float(timer[0])*3600+float(timer[1])*60+float(timer[2]))
 	return (float(timer[0])*3600+float(timer[1])*60+float(timer[2]))
 
 #converting time(seconds/integer) into string
