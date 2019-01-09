@@ -40,13 +40,15 @@ def remove_whitespaces(string):
 
 #converting time(string) to integer(seconds)
 def str_time (string):
-	timer = string.split(':')
+	timer = string.replace(',', '.').split(':')
 	if len(timer)==2: timer = [0]+timer
-	return (int(timer[0])*3600+int(timer[1])*60+int(timer[2]))
+	print (timer)
+	print (float(timer[0])*3600+float(timer[1])*60+float(timer[2]))
+	return (float(timer[0])*3600+float(timer[1])*60+float(timer[2]))
 
 #converting time(seconds/integer) into string
 def time_str (time):
-	return (str(time // 3600).zfill(2)+ ':' + str((time % 3600) // 60 ).zfill(2) + ':' + str((time % 3600) % 60).zfill(2))
+	return ((str(int(time // 3600)).zfill(2)+ ':' + str(int((time % 3600) // 60 )).zfill(2) + ':' + str('{:06.3f}'.format(float((time % 3600) % 60))).replace('.',',')))
 
 #generation of subtitles block/element
 def generate_subs(num,time1,time2,text):
@@ -56,6 +58,7 @@ def generate_subs(num,time1,time2,text):
 #program---------------------------------
 #settings (will be moved to command line)
 pause_time=5
+minimum_time=0.001
 symbols_in_line=120
 txtfile='sub.txt'
 subfile='sub.srt'
@@ -86,13 +89,13 @@ StartTime= subtitles_array[0]['StartTime']
 for n in range(0, len(subtitles_array)):
 	if (subtitles_array[n]['StartTime']==''): counter=counter+1
 	else:
-		subtitles_array[n]['EndTime'] = time_str(str_time(subtitles_array[n]['StartTime'])+pause_time)
 		subtitles_array[n]['StartTime'] = time_str(str_time(subtitles_array[n]['StartTime']))
+		subtitles_array[n]['EndTime'] = time_str(str_time(subtitles_array[n]['StartTime'])+pause_time)
 		if (counter>0):
 			EndTime=subtitles_array[n]['StartTime']
 			for m in range(n-counter, n): 
 				subtitles_array[m]['StartTime']=time_str(str_time(subtitles_array[m-1]['StartTime'])+pause_time)
-				subtitles_array[m]['EndTime']=time_str(str_time(subtitles_array[m]['StartTime'])+pause_time)
+				subtitles_array[m]['EndTime']=time_str(str_time(subtitles_array[m]['StartTime'])+pause_time-minimum_time)
 			counter=0
 			StartTime=EndTime
 
