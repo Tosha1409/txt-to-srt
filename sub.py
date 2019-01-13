@@ -42,8 +42,6 @@ def remove_whitespaces(string):
 def str_time (string):
 	timer = string.replace(',', '.').split(':')
 	if len(timer)==2: timer = [0]+timer
-	#print (timer)
-	#print (float(timer[0])*3600+float(timer[1])*60+float(timer[2]))
 	return (float(timer[0])*3600+float(timer[1])*60+float(timer[2]))
 
 #converting time(seconds/integer) into string
@@ -82,34 +80,49 @@ for line in subs:
 #adding extra for correct handling (used for next code block)
 subtitles_array.append(sub_element('10:10:10', '', ''))
 
+#checking if first line have correct time
+if (subtitles_array[0]['StartTime']==''):
+	print ('Subtitles file is broken (first line doesnt have timemark)')
+	sys.exit()
+
 #adding missed starting time, and ending time (must be added cases when real time between subtitles checked and added case when it is less then pause_time
 #also saving srt file. and adding parts of second
 counter=0
-StartTime= subtitles_array[0]['StartTime']
-for n in range(0, len(subtitles_array)):
-	if (subtitles_array[n]['StartTime']==''): counter=counter+1
+for n in range(0, len(subtitles_array)-1):
+	#if next line doesnt have StartTime increasing counter
+	if ((subtitles_array[n+1]['StartTime']=='')): counter=counter+1
 	else:
-		subtitles_array[n]['StartTime'] = time_str(str_time(subtitles_array[n]['StartTime']))
-		subtitles_array[n]['EndTime'] = time_str(str_time(subtitles_array[n]['StartTime'])+pause_time)
+		#making time delta equal to pause time as default
+		time_delta = pause_time
+		#if this and next line have starting time
+		if (counter==0):
+			#counting time delta (or rather changing time delta if is in reality smaller then pause time)
+			if ((str_time(subtitles_array[n+1]['StartTime'])-str_time(subtitles_array[n]['StartTime']))<=pause_time):
+				time_delta = str_time(subtitles_array[n+1]['StartTime'])-str_time(subtitles_array[n]['StartTime'])-minimum_time
+			#normalizing Time stamps and counting ending time 
+			subtitles_array[n]['StartTime'] = time_str(str_time(subtitles_array[n]['StartTime']))
+			subtitles_array[n]['EndTime'] = time_str(str_time(subtitles_array[n]['StartTime'])+time_delta)
+		#working with block of lines, where is missed timestamps
 		if (counter>0):
-			EndTime=subtitles_array[n]['StartTime']
-			for m in range(n-counter, n): 
-				subtitles_array[m]['StartTime']=time_str(str_time(subtitles_array[m-1]['StartTime'])+pause_time)
-				subtitles_array[m]['EndTime']=time_str(str_time(subtitles_array[m]['StartTime'])+pause_time-minimum_time)
-			counter=0
-			StartTime=EndTime
-
+			#counting time delta (or rather changing time delta if is in reality smaller then pause time)
+			if (n!=len(subtitles_array)-1) and (((str_time(subtitles_array[n+1]['StartTime'])-str_time(subtitles_array[n-counter]['StartTime']))/(counter+1))<=pause_time):
+				time_delta = ((str_time(subtitles_array[n+1]['StartTime'])-str_time(subtitles_array[n-counter]['StartTime']))/(counter+1))			
+			#loop for block of lines that normalizing timestamps and counting EndTime
+			for m in range(n-counter, n+1):
+				subtitles_array[m]['StartTime']=time_str(str_time(subtitles_array[m]['StartTime']))
+				if ((m==n) and not (time_delta<pause_time)):subtitles_array[m]['EndTime']=time_str(str_time(subtitles_array[m]['StartTime'])+time_delta) 
+				else:
+					subtitles_array[m+1]['StartTime']=time_str(str_time(subtitles_array[m]['StartTime'])+time_delta)
+					subtitles_array[m]['EndTime']=time_str(str_time(subtitles_array[m]['StartTime'])+time_delta-minimum_time)
+		counter=0
+			
 #removing extra element (it doesnt needed anymore)
 subtitles_array.pop()
 
-#generating Dataframe and saving to CSV file
-subs = DataFrame(data = subtitles_array, columns=['StartTime', 'EndTime', 'Text'])
-subs.to_csv('file.csv', sep='\t', index=False, header=False)
-
-#test for creating csvfile (will be removed)
-#ready_file=open(subfile,'w')
-#ready_file.write(generate_subs(1, '00:02:17,440', '00:02:30,375', 'Senator, were making our final approach into Coruscant'))
-#ready_file.write(generate_subs(2, '00:02:31,476', '00:02:42,501', 'Very good, Lieutenant.'))
-#ready_file.close()
+#creating subtitles file
+ready_file=open(subfile,'w')
+for n in range(0,len(subtitles_array)):
+	ready_file.write(generate_subs(n+1, subtitles_array[n]['StartTime'], subtitles_array[n]['EndTime'], subtitles_array[n]['Text']))		
+ready_file.close()
 
 print ('Done!!!')
